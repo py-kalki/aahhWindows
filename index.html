@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoanKeys — Finally, a reason to type with feeling.</title>
+  <meta name="description" content="Install MoanKeys. Press any key. Your laptop moans. 104 unique sounds, one per key. $4.99 one-time. It's dumb. It's genius. It's MoanKeys." />
+  <meta property="og:title" content="MoanKeys — Finally, a reason to type with feeling." />
+  <meta property="og:description" content="Every keystroke. Every moan. Every time. $4.99 one-time payment." />
+  <meta property="og:type" content="website" />
+
+  <!-- Google Fonts: Bebas Neue + DM Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GSAP 3.12.2 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <!-- Stripe.js v3 -->
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <!--
+    BACKEND REQUIRED:
+    POST /api/create-payment-intent  → returns { clientSecret }
+    POST /api/send-download-email    → sends email with download link after payment confirmed
+    Use Stripe webhooks to confirm payment before sending download link.
+    Recommended stack: Node.js + Express + Stripe SDK + Nodemailer or Resend.
+  -->
+
+  <style>
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #0a0a0a;
+      color: #ffffff;
+      font-family: 'DM Sans', sans-serif;
+      cursor: none;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    #cursor {
+      position: fixed;
+      width: 28px;
+      height: 28px;
+      font-size: 22px;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.08s ease;
+      filter: drop-shadow(0 0 8px #ff2d6b);
+      will-change: transform;
+    }
+    #cursor-trail {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff2d6b;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+      will-change: transform;
+    }
+
+    /* ============================================================
+       WEBGL CANVAS
+    ============================================================ */
+    #webgl-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       NAV
+    ============================================================ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 40px;
+      background: rgba(10,10,10,0.7);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,45,107,0.15);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #ff2d6b;
+      letter-spacing: 2px;
+      text-decoration: none;
+    }
+    .nav-logo span { color: #f5ff4b; }
+    .nav-cta {
+      background: #ff2d6b;
+      color: #0a0a0a;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 9px 20px;
+      border: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: none;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .nav-cta:hover { background: #f5ff4b; transform: skew(-2deg); }
+
+    /* ============================================================
+       HERO SECTION
+    ============================================================ */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 120px 20px 80px;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Floating keyboard keys */
+    .float-key {
+      position: absolute;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(18px, 3vw, 32px);
+      color: rgba(255,255,255,0.85);
+      background: #111;
+      border: 2px solid rgba(255,45,107,0.4);
+      border-radius: 6px;
+      width: clamp(44px, 6vw, 68px);
+      height: clamp(44px, 6vw, 68px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 0 0 1px #1a1a1a,
+        0 4px 0 #ff2d6b,
+        0 6px 12px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      user-select: none;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .key-a  { top: 18%; left: 6%; }
+    .key-s  { top: 72%; left: 10%; }
+    .key-d  { top: 30%; left: 82%; }
+    .key-f  { top: 65%; left: 80%; }
+    .key-j  { top: 14%; left: 75%; }
+    .key-k  { top: 80%; left: 22%; }
+
+    /* Headline */
+    .hero-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 18vw, 220px);
+      line-height: 0.88;
+      letter-spacing: -2px;
+      color: #ffffff;
+      position: relative;
+      z-index: 3;
+      mix-blend-mode: normal;
+    }
+    .hero-headline .pink { color: #ff2d6b; }
+    .hero-headline .yellow { color: #f5ff4b; }
+
+    .hero-letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(60px) rotate(8deg);
+    }
+
+    .hero-tagline {
+      font-family: 'DM Sans', sans-serif;
+      font-size: clamp(16px, 3vw, 24px);
+      font-weight: 400;
+      color: rgba(255,255,255,0.7);
+      margin-top: 16px;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 3;
+    }
+    .hero-tagline em { color: #f5ff4b; font-style: italic; }
+
+    /* Equalizer */
+    .equalizer {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 36px;
+      margin: 22px auto 30px;
+      justify-content: center;
+      position: relative;
+      z-index: 3;
+    }
+    .eq-bar {
+      width: 5px;
+      background: linear-gradient(to top, #ff2d6b, #f5ff4b);
+      border-radius: 2px;
+      animation: eq-bounce var(--d, 0.8s) ease-in-out infinite alternate;
+    }
+    @keyframes eq-bounce {
+      from { height: 4px; opacity: 0.4; }
+      to   { height: var(--h, 28px); opacity: 1; }
+    }
+
+    /* CTA Button */
+    .hero-cta-wrap {
+      position: relative;
+      z-index: 3;
+    }
+    .hero-cta {
+      display: inline-block;
+      background: #ff2d6b;
+      color: #0a0a0a;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(22px, 4vw, 38px);
+      letter-spacing: 3px;
+      padding: 18px 48px;
+      border: none;
+      text-decoration: none;
+      cursor: none;
+      position: relative;
+      box-shadow: 6px 6px 0 #f5ff4b;
+      transition: box-shadow 0.1s, transform 0.1s;
+    }
+    .hero-cta::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border: 2px solid #ff2d6b;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .hero-cta:hover {
+      box-shadow: 3px 3px 0 #f5ff4b;
+      transform: translate(3px, 3px);
+    }
+    .hero-cta:hover::after { opacity: 1; }
+
+    .hero-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 14px;
+      letter-spacing: 1px;
+      text-transform: lowercase;
+    }
+
+    /* Noise overlay */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ============================================================
+       HOW IT WORKS
+    ============================================================ */
+    #how {
+      position: relative;
+      z-index: 1;
+      padding: 120px 40px;
+      background: #0d0d0d;
+      border-top: 1px solid #1a1a1a;
+    }
+    .section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #ff2d6b;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(42px, 8vw, 100px);
+      line-height: 0.92;
+      letter-spacing: -1px;
+      color: #ffffff;
+      margin-bottom: 70px;
+      overflow: hidden;
+    }
+    .section-title .accent { color: #f5ff4b; }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0;
+    }
+    .step {
+      position: relative;
+      padding: 40px 36px;
+      border: 1px solid #1e1e1e;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .step:hover { border-color: #ff2d6b; }
+    .step:nth-child(2) { background: #0f0f0f; }
+    .step:nth-child(3) { background: #111; }
+
+    .step-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 12vw, 140px);
+      color: #f5ff4b;
+      opacity: 0.08;
+      position: absolute;
+      top: -10px;
+      right: 16px;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+    .step-emoji {
+      font-size: 38px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .step-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 2px;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .step-desc {
+      font-size: 15px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+    }
+    .step-desc em { color: #ff2d6b; font-style: normal; }
+
+    /* ============================================================
+       PRICING
+    ============================================================ */
+    #pricing {
+      position: relative;
+      z-index: 1;
+      padding: 120px 40px;
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #pricing .section-title { text-align: center; }
+
+    .price-card {
+      border: 3px solid #ff2d6b;
+      padding: 52px 56px;
+      max-width: 560px;
+      width: 100%;
+      position: relative;
+      background: #0d0d0d;
+      box-shadow: 10px 10px 0 #ff2d6b;
+    }
+    /* Corner accent */
+    .price-card::before {
+      content: '🔥 BEST VALUE 🔥';
+      position: absolute;
+      top: -1px; right: -1px;
+      background: #f5ff4b;
+      color: #0a0a0a;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 5px 12px;
+      text-transform: uppercase;
+    }
+
+    .price-amount {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 14vw, 120px);
+      color: #f5ff4b;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+    .price-note {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 36px;
+      letter-spacing: 1px;
+    }
+    .price-note em { color: #ff2d6b; font-style: normal; }
+
+    .features {
+      list-style: none;
+      margin-bottom: 40px;
+    }
+    .features li {
+      font-size: 15px;
+      color: rgba(255,255,255,0.7);
+      padding: 10px 0;
+      border-bottom: 1px solid #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .features li:last-child { border-bottom: none; }
+    .features .check {
+      color: #ff2d6b;
+      font-weight: 700;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .buy-btn {
+      width: 100%;
+      background: #ff2d6b;
+      color: #0a0a0a;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 3px;
+      padding: 20px;
+      border: none;
+      cursor: none;
+      box-shadow: 5px 5px 0 #f5ff4b;
+      transition: transform 0.1s, box-shadow 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+    .buy-btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.4s;
+    }
+    .buy-btn:hover::before { left: 100%; }
+    .buy-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 3px 3px 0 #f5ff4b;
+    }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      position: relative;
+      z-index: 1;
+      background: #050505;
+      border-top: 1px solid #1a1a1a;
+      padding: 60px 40px;
+      text-align: center;
+    }
+    .footer-brand {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(22px, 5vw, 42px);
+      color: #ffffff;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .footer-brand span { color: #ff2d6b; }
+    .footer-disclaimer {
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 28px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .footer-links a {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      text-decoration: none;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: #ff2d6b; }
+    .footer-made {
+      font-size: 13px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ============================================================
+       PAYMENT MODAL
+    ============================================================ */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    #modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #modal {
+      background: #0d0d0d;
+      border: 2px solid #ff2d6b;
+      max-width: 500px;
+      width: 100%;
+      padding: 48px 44px;
+      position: relative;
+      box-shadow: 12px 12px 0 #ff2d6b;
+      transform: translateY(30px) scale(0.97);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    #modal-overlay.active #modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 20px;
+      font-size: 24px;
+      color: rgba(255,255,255,0.4);
+      cursor: none;
+      background: none;
+      border: none;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: #ff2d6b; }
+
+    .modal-product {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #1e1e1e;
+      padding: 18px 20px;
+      margin-bottom: 30px;
+      background: #111;
+    }
+    .modal-product-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+    .modal-product-detail {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 2px;
+    }
+    .modal-product-price {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: #f5ff4b;
+    }
+
+    .modal-section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 2px;
+      color: #ff2d6b;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      border-radius: 0;
+    }
+    .form-input:focus { border-color: #ff2d6b; }
+    .form-input::placeholder { color: rgba(255,255,255,0.2); }
+
+    /* Stripe element container */
+    #card-element {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      padding: 14px 16px;
+      transition: border-color 0.2s;
+    }
+    #card-element.StripeElement--focus { border-color: #ff2d6b; }
+
+    #card-errors {
+      font-size: 13px;
+      color: #ff2d6b;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+
+    .pay-btn {
+      width: 100%;
+      background: #ff2d6b;
+      color: #0a0a0a;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 3px;
+      padding: 18px;
+      border: none;
+      cursor: none;
+      margin-top: 24px;
+      box-shadow: 4px 4px 0 #f5ff4b;
+      transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+      position: relative;
+    }
+    .pay-btn:hover:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 #f5ff4b;
+    }
+    .pay-btn:disabled {
+      background: #555;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .pay-secure {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      margin-top: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* Success state */
+    #modal-success {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+    #modal-success.show { display: block; }
+    .success-emoji {
+      font-size: 64px;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .success-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(28px, 6vw, 48px);
+      color: #f5ff4b;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+      line-height: 1.1;
+    }
+    .success-sub {
+      font-size: 15px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.7;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+    .success-sub em { color: #ff2d6b; font-style: normal; }
+
+    #modal-form { }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(10,10,10,0.3);
+      border-top-color: #0a0a0a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       MARQUEE STRIP
+    ============================================================ */
+    .marquee-strip {
+      background: #ff2d6b;
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 14px 0;
+      position: relative;
+      z-index: 2;
+    }
+    .marquee-inner {
+      display: inline-flex;
+      animation: marquee 20s linear infinite;
+    }
+    .marquee-item {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #0a0a0a;
+      padding: 0 32px;
+    }
+    .marquee-dot {
+      color: #f5ff4b;
+      padding: 0 4px;
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ============================================================
+       GLITCH EFFECT on headline
+    ============================================================ */
+    .glitch-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .glitch-wrap::before,
+    .glitch-wrap::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: inherit;
+      line-height: inherit;
+      letter-spacing: inherit;
+      width: 100%;
+      pointer-events: none;
+    }
+    .glitch-wrap::before {
+      color: #ff2d6b;
+      clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+      transform: translate(-3px, 0);
+      animation: glitch1 4s infinite steps(1);
+    }
+    .glitch-wrap::after {
+      color: #f5ff4b;
+      clip-path: polygon(0 65%, 100% 65%, 100% 80%, 0 80%);
+      transform: translate(3px, 0);
+      animation: glitch2 4s infinite steps(1);
+    }
+    @keyframes glitch1 {
+      0%, 92%, 100% { opacity: 0; transform: translate(0,0); }
+      93% { opacity: 1; transform: translate(-4px, 1px); }
+      95% { opacity: 1; transform: translate(4px, -1px); }
+      97% { opacity: 0; }
+    }
+    @keyframes glitch2 {
+      0%, 94%, 100% { opacity: 0; transform: translate(0,0); }
+      95% { opacity: 1; transform: translate(4px, -2px); }
+      97% { opacity: 1; transform: translate(-4px, 2px); }
+      99% { opacity: 0; }
+    }
+
+    /* ============================================================
+       SCROLL INDICATOR
+    ============================================================ */
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: float-hint 2s ease-in-out infinite;
+      z-index: 3;
+    }
+    .scroll-hint span {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+    }
+    .scroll-arrow {
+      width: 18px; height: 28px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      position: relative;
+    }
+    .scroll-arrow::before {
+      content: '';
+      position: absolute;
+      top: 5px; left: 50%;
+      transform: translateX(-50%);
+      width: 3px; height: 6px;
+      background: #ff2d6b;
+      border-radius: 2px;
+      animation: scroll-dot 2s ease-in-out infinite;
+    }
+    @keyframes scroll-dot {
+      0% { opacity: 1; top: 5px; }
+      100% { opacity: 0; top: 16px; }
+    }
+    @keyframes float-hint {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-6px); }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      #hero { padding: 100px 16px 80px; }
+      #how, #pricing { padding: 80px 20px; }
+      .price-card { padding: 36px 24px; }
+      .key-a, .key-s, .key-d, .key-f, .key-j, .key-k { opacity: 0.4; }
+      #modal { padding: 36px 24px; }
+      footer { padding: 48px 20px; }
+    }
+
+    /* Visibility API: pause canvas when hidden */
+    body.page-hidden #webgl-canvas { opacity: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div id="cursor">🫦</div>
+  <div id="cursor-trail"></div>
+
+  <!-- WebGL Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Navigation -->
+  <nav>
+    <a class="nav-logo" href="#hero">MOAN<span>KEYS</span></a>
+    <button class="nav-cta" id="nav-buy-btn" aria-label="Buy MoanKeys">Get It — $4.99</button>
+  </nav>
+
+  <!-- ========================
+       HERO SECTION
+  ========================= -->
+  <section id="hero" aria-label="Hero">
+
+    <!-- Floating Keys -->
+    <div class="float-key key-a" aria-hidden="true">A</div>
+    <div class="float-key key-s" aria-hidden="true">S</div>
+    <div class="float-key key-d" aria-hidden="true">D</div>
+    <div class="float-key key-f" aria-hidden="true">F</div>
+    <div class="float-key key-j" aria-hidden="true">J</div>
+    <div class="float-key key-k" aria-hidden="true">K</div>
+
+    <h1 class="hero-headline" aria-label="MoanKeys">
+      <span class="glitch-wrap" data-text="MOANKEYS" id="headline-wrap">
+        <span id="hero-letters"></span>
+      </span>
+    </h1>
+
+    <p class="hero-tagline">
+      <em>"Finally, a reason to type with feeling."</em>
+    </p>
+    <p style="font-size:13px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-top:6px;">Every keystroke. Every moan. Every time.</p>
+
+    <!-- Sound wave equalizer -->
+    <div class="equalizer" aria-hidden="true" id="equalizer"></div>
+
+    <div class="hero-cta-wrap">
+      <button class="hero-cta" id="hero-buy-btn" aria-label="Buy MoanKeys for $4.99">GET IT FOR $4.99 →</button>
+      <p class="hero-sub">one-time payment. instant regret. permanent fun.</p>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span>Scroll</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- Marquee Strip -->
+  <div class="marquee-strip" aria-hidden="true">
+    <div class="marquee-inner" id="marquee-inner"></div>
+  </div>
+
+  <!-- ========================
+       HOW IT WORKS
+  ========================= -->
+  <section id="how" aria-label="How It Works">
+    <p class="section-label">How It Works</p>
+    <h2 class="section-title">IT'S EMBARRASSINGLY <span class="accent">SIMPLE</span></h2>
+    <div class="steps-grid">
+      <div class="step">
+        <span class="step-number" aria-hidden="true">01</span>
+        <span class="step-emoji" aria-hidden="true">💾</span>
+        <div class="step-name">INSTALL</div>
+        <p class="step-desc">Drag it. Drop it. Done.<br/>No setup wizard. No dark patterns. Just <em>vibes</em>.</p>
+      </div>
+      <div class="step">
+        <span class="step-number" aria-hidden="true">02</span>
+        <span class="step-emoji" aria-hidden="true">⌨️</span>
+        <div class="step-name">TYPE</div>
+        <p class="step-desc">Press any key. Any key at all.<br/>Your work email. A Discord fight. <em>Doesn't matter.</em></p>
+      </div>
+      <div class="step">
+        <span class="step-number" aria-hidden="true">03</span>
+        <span class="step-emoji" aria-hidden="true">😮</span>
+        <div class="step-name">MOAN</div>
+        <p class="step-desc">Your laptop does the rest.<br/>You do the explaining. <em>Good luck.</em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================
+       PRICING
+  ========================= -->
+  <section id="pricing" aria-label="Pricing">
+    <p class="section-label">Pricing</p>
+    <h2 class="section-title">ONE PRICE.<br/><span class="accent">INFINITE MOANS.</span></h2>
+
+    <div class="price-card" id="price-card">
+      <div class="price-amount">$4.99</div>
+      <p class="price-note"><em>one-time.</em> no subscription. we're not monsters.</p>
+      <ul class="features">
+        <li><span class="check">✓</span> 104 unique moan sounds (one per key)</li>
+        <li><span class="check">✓</span> Works on Windows &amp; Mac</li>
+        <li><span class="check">✓</span> Lightweight (your dignity weighs more)</li>
+        <li><span class="check">✓</span> Download link sent to your email instantly</li>
+        <li><span class="check">✓</span> Lifetime updates (yes, we'll add weirder sounds)</li>
+      </ul>
+      <button class="buy-btn" id="pricing-buy-btn" aria-label="Buy MoanKeys">
+        BUY MOANKEYS — $4.99
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================
+       FOOTER
+  ========================= -->
+  <footer>
+    <div class="footer-brand">MOAN<span>KEYS™</span></div>
+    <p class="footer-disclaimer">Not responsible for workplace incidents.</p>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="#" aria-label="Privacy Policy">Privacy Policy</a>
+      <a href="#" aria-label="Terms of Service">Terms</a>
+      <a href="#" aria-label="Contact Us">Contact</a>
+    </nav>
+    <p class="footer-made">Made with 🫦 and questionable judgment</p>
+  </footer>
+
+  <!-- ========================
+       PAYMENT MODAL
+  ========================= -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-label="Purchase MoanKeys">
+    <div id="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close modal">✕</button>
+
+      <!-- Product Summary -->
+      <div class="modal-product">
+        <div>
+          <div class="modal-product-name">MOANKEYS</div>
+          <div class="modal-product-detail">One-time license · Instant download</div>
+        </div>
+        <div class="modal-product-price">$4.99</div>
+      </div>
+
+      <!-- Form -->
+      <div id="modal-form">
+        <div class="modal-section-title">YOUR DETAILS</div>
+
+        <div class="form-group">
+          <label class="form-label" for="email-input">Email Address</label>
+          <input
+            class="form-input"
+            type="email"
+            id="email-input"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="card-element">Card Details</label>
+          <!-- REPLACE: Stripe Elements will be mounted here -->
+          <div id="card-element"></div>
+          <div id="card-errors" role="alert"></div>
+        </div>
+
+        <button class="pay-btn" id="pay-btn" type="button" aria-label="Complete purchase">
+          PAY $4.99 — GET MOANKEYS
+        </button>
+        <p class="pay-secure">🔒 Secured by Stripe · SSL Encrypted</p>
+      </div>
+
+      <!-- Success State -->
+      <div id="modal-success">
+        <span class="success-emoji">🫦</span>
+        <div class="success-title">YOUR LAPTOP IS ABOUT TO GET LOUD</div>
+        <p class="success-sub">
+          Check your email — your download link is on its way.<br/>
+          <em>Don't blame us for what happens next.</em>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    /* ============================================================
+       VISIBILITY API — pause WebGL when tab is hidden
+    ============================================================ */
+    let pageVisible = true;
+    document.addEventListener('visibilitychange', () => {
+      pageVisible = !document.hidden;
+      if (document.hidden) document.body.classList.add('page-hidden');
+      else document.body.classList.remove('page-hidden');
+    });
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    const cursor = document.getElementById('cursor');
+    const cursorTrail = document.getElementById('cursor-trail');
+    let mx = -100, my = -100, tx = -100, ty = -100;
+
+    document.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top  = my + 'px';
+    });
+
+    function animateTrail() {
+      tx += (mx - tx) * 0.12;
+      ty += (my - ty) * 0.12;
+      cursorTrail.style.left = tx + 'px';
+      cursorTrail.style.top  = ty + 'px';
+      requestAnimationFrame(animateTrail);
+    }
+    animateTrail();
+
+    document.querySelectorAll('button, a, input').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.style.fontSize = '30px');
+      el.addEventListener('mouseleave', () => cursor.style.fontSize = '22px');
+    });
+
+    /* ============================================================
+       EQUALIZER BARS
+    ============================================================ */
+    const eq = document.getElementById('equalizer');
+    const barCount = 22;
+    for (let i = 0; i < barCount; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'eq-bar';
+      const h = Math.random() * 26 + 6;
+      const d = (Math.random() * 0.5 + 0.5).toFixed(2);
+      bar.style.setProperty('--h', h + 'px');
+      bar.style.setProperty('--d', d + 's');
+      bar.style.animationDelay = (Math.random() * 0.5).toFixed(2) + 's';
+      eq.appendChild(bar);
+    }
+
+    /* ============================================================
+       MARQUEE
+    ============================================================ */
+    const marqueeInner = document.getElementById('marquee-inner');
+    const marqueeItems = [
+      'MOANKEYS', '104 SOUNDS', 'ONE PRICE', '$4.99', 'NO SUBSCRIPTION',
+      'EVERY KEY', 'EVERY MOAN', 'WORKS ON WINDOWS', 'WORKS ON MAC',
+      'INSTANT DOWNLOAD', 'LIFETIME UPDATES'
+    ];
+    // Duplicate for seamless loop
+    [...marqueeItems, ...marqueeItems].forEach((item, i) => {
+      const span = document.createElement('span');
+      span.className = 'marquee-item';
+      span.innerHTML = item + '<span class="marquee-dot">◆</span>';
+      marqueeInner.appendChild(span);
+    });
+
+    /* ============================================================
+       THREE.JS WEBGL PARTICLE FIELD
+    ============================================================ */
+    (function initWebGL() {
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x000000, 0);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 80;
+
+      // Particle geometry
+      const COUNT = 1600;
+      const positions = new Float32Array(COUNT * 3);
+      const colors = new Float32Array(COUNT * 3);
+
+      const pinkColor  = new THREE.Color('#ff2d6b');
+      const yellowColor = new THREE.Color('#f5ff4b');
+      const whiteColor  = new THREE.Color('#ffffff');
+
+      for (let i = 0; i < COUNT; i++) {
+        positions[i * 3]     = (Math.random() - 0.5) * 200;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+
+        const r = Math.random();
+        const col = r < 0.4 ? pinkColor : r < 0.65 ? yellowColor : whiteColor;
+        colors[i * 3]     = col.r;
+        colors[i * 3 + 1] = col.g;
+        colors[i * 3 + 2] = col.b;
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.55,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+
+      const particles = new THREE.Points(geo, mat);
+      scene.add(particles);
+
+      // Wave plane
+      const waveGeo = new THREE.PlaneGeometry(300, 300, 60, 60);
+      const waveMat = new THREE.MeshBasicMaterial({
+        color: 0xff2d6b,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.03,
+      });
+      const waveMesh = new THREE.Mesh(waveGeo, waveMat);
+      waveMesh.rotation.x = -Math.PI / 2.8;
+      waveMesh.position.y = -30;
+      scene.add(waveMesh);
+
+      let mouse = { x: 0, y: 0 };
+      document.addEventListener('mousemove', (e) => {
+        mouse.x = (e.clientX / window.innerWidth  - 0.5) * 2;
+        mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      let time = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+        if (!pageVisible) return;
+
+        time += 0.008;
+
+        // Rotate particles slowly
+        particles.rotation.y = time * 0.06 + mouse.x * 0.12;
+        particles.rotation.x = time * 0.03 + mouse.y * 0.06;
+
+        // Wave animation on waveGeo vertices
+        const posArr = waveGeo.attributes.position.array;
+        const w = 61;
+        for (let i = 0; i <= 60; i++) {
+          for (let j = 0; j <= 60; j++) {
+            const idx = (i * w + j) * 3;
+            const ox = posArr[idx];
+            const oy = posArr[idx + 1];
+            posArr[idx + 2] = Math.sin(ox * 0.06 + time * 1.2) * 4
+                            + Math.sin(oy * 0.06 + time * 0.9) * 3
+                            + mouse.x * 3;
+          }
+        }
+        waveGeo.attributes.position.needsUpdate = true;
+
+        // Camera drift with mouse
+        camera.position.x += (mouse.x * 8 - camera.position.x) * 0.03;
+        camera.position.y += (-mouse.y * 5 - camera.position.y) * 0.03;
+        camera.lookAt(scene.position);
+
+        renderer.render(scene, camera);
+      }
+      animate();
+    })();
+
+    /* ============================================================
+       GSAP ANIMATIONS
+    ============================================================ */
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Hero letter reveal (staggered)
+    const word = 'MOANKEYS';
+    const lettersContainer = document.getElementById('hero-letters');
+    word.split('').forEach((char, i) => {
+      const span = document.createElement('span');
+      span.className = 'hero-letter';
+      span.textContent = char;
+      span.style.color = i === 4 ? '#ff2d6b' : (i === 7 ? '#f5ff4b' : '#ffffff');
+      lettersContainer.appendChild(span);
+    });
+
+    const glitchWrap = document.getElementById('headline-wrap');
+    glitchWrap.parentElement.setAttribute('data-text', word);
+
+    gsap.to('.hero-letter', {
+      opacity: 1,
+      y: 0,
+      rotate: 0,
+      duration: 0.6,
+      stagger: 0.07,
+      ease: 'back.out(1.7)',
+      delay: 0.3,
+    });
+
+    // Tagline fade in
+    gsap.from('.hero-tagline', { opacity: 0, y: 30, duration: 1, delay: 1.1, ease: 'power3.out' });
+    gsap.from('#equalizer', { opacity: 0, y: 20, duration: 0.8, delay: 1.4, ease: 'power2.out' });
+    gsap.from('.hero-cta-wrap', { opacity: 0, y: 40, duration: 0.9, delay: 1.6, ease: 'back.out(1.4)' });
+
+    // CTA button pulse + wiggle loop
+    gsap.to('#hero-buy-btn', {
+      scale: 1.04,
+      duration: 0.7,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    });
+    gsap.to('#hero-buy-btn', {
+      x: 2,
+      rotation: 0.5,
+      duration: 1.8,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+      delay: 0.4,
+    });
+
+    // Pricing buy button pulse
+    gsap.to('#pricing-buy-btn', {
+      scale: 1.03,
+      duration: 0.9,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+      delay: 0.5,
+    });
+
+    // Floating keys GSAP timelines
+    document.querySelectorAll('.float-key').forEach((key, i) => {
+      const tl = gsap.timeline({ repeat: -1, yoyo: true, defaults: { ease: 'sine.inOut' } });
+      tl.to(key, {
+        y: (i % 2 === 0 ? -20 : -14) + (i * 2),
+        x: (i % 3 === 0 ? 8 : -8),
+        rotation: (i % 2 === 0 ? 4 : -4),
+        duration: 2 + i * 0.3,
+        delay: i * 0.2,
+      });
+    });
+
+    // Section headings slide up on scroll
+    gsap.utils.toArray('.section-title').forEach(el => {
+      gsap.from(el, {
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+        y: 80,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+      });
+    });
+
+    // Steps slide in
+    gsap.utils.toArray('.step').forEach((step, i) => {
+      gsap.from(step, {
+        scrollTrigger: {
+          trigger: step,
+          start: 'top 88%',
+          toggleActions: 'play none none none',
+        },
+        y: 60,
+        opacity: 0,
+        duration: 0.7,
+        delay: i * 0.12,
+        ease: 'power2.out',
+      });
+    });
+
+    // Pricing card in
+    gsap.from('#price-card', {
+      scrollTrigger: {
+        trigger: '#price-card',
+        start: 'top 85%',
+        toggleActions: 'play none none none',
+      },
+      y: 80,
+      opacity: 0,
+      duration: 0.9,
+      ease: 'back.out(1.3)',
+    });
+
+    // Hero parallax on scroll
+    gsap.to('.hero-headline', {
+      scrollTrigger: {
+        trigger: '#hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      },
+      y: -120,
+      opacity: 0.3,
+    });
+
+    /* ============================================================
+       STRIPE PAYMENT MODAL
+       REPLACE: pk_test_YOUR_KEY_HERE with your real Stripe publishable key
+    ============================================================ */
+    const STRIPE_PK = 'pk_test_YOUR_KEY_HERE'; // <!-- REPLACE: Insert your Stripe publishable key here -->
+
+    let stripe, cardElement;
+    let stripeLoaded = false;
+
+    function initStripe() {
+      if (stripeLoaded || typeof Stripe === 'undefined') return;
+      try {
+        stripe = Stripe(STRIPE_PK);
+        const elements = stripe.elements({
+          fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap' }],
+        });
+
+        cardElement = elements.create('card', {
+          style: {
+            base: {
+              color: '#ffffff',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '15px',
+              fontSmoothing: 'antialiased',
+              '::placeholder': { color: 'rgba(255,255,255,0.2)' },
+              iconColor: '#ff2d6b',
+            },
+            invalid: { color: '#ff2d6b', iconColor: '#ff2d6b' },
+          },
+        });
+        cardElement.mount('#card-element');
+
+        cardElement.on('change', (e) => {
+          document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
+        });
+
+        stripeLoaded = true;
+      } catch (e) {
+        console.warn('[MoanKeys] Stripe init error:', e.message);
+      }
+    }
+
+    // Modal open/close
+    const overlay = document.getElementById('modal-overlay');
+    const payBtn  = document.getElementById('pay-btn');
+
+    function openModal() {
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      initStripe();
+      // Animate modal open
+      gsap.fromTo('#modal', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: 'back.out(1.4)' });
+    }
+
+    function closeModal() {
+      gsap.to('#modal', {
+        y: 30,
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    }
+
+    document.getElementById('hero-buy-btn').addEventListener('click', openModal);
+    document.getElementById('pricing-buy-btn').addEventListener('click', openModal);
+    document.getElementById('nav-buy-btn').addEventListener('click', openModal);
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    // Payment form submission
+    payBtn.addEventListener('click', async () => {
+      const email = document.getElementById('email-input').value.trim();
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        document.getElementById('card-errors').textContent = 'Please enter a valid email address.';
+        gsap.fromTo('#email-input', { x: 0 }, { x: [-8, 8, -6, 6, 0], duration: 0.4, ease: 'none' });
+        return;
+      }
+
+      if (!stripeLoaded || !cardElement) {
+        // Demo mode: no real Stripe key
+        simulateSuccess(email);
+        return;
+      }
+
+      payBtn.disabled = true;
+      payBtn.innerHTML = '<span class="spinner"></span>PROCESSING...';
+      document.getElementById('card-errors').textContent = '';
+
+      try {
+        /*
+          REPLACE: Call your backend to create a PaymentIntent
+          const res = await fetch('/api/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: 499, currency: 'usd', email }),
+          });
+          const { clientSecret } = await res.json();
+          const result = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: { card: cardElement, billing_details: { email } }
+          });
+          if (result.error) throw new Error(result.error.message);
+        */
+
+        // DEMO: Simulate successful payment (remove in production)
+        await new Promise(r => setTimeout(r, 1800));
+        simulateSuccess(email);
+
+      } catch (err) {
+        document.getElementById('card-errors').textContent = err.message;
+        payBtn.disabled = false;
+        payBtn.innerHTML = 'PAY $4.99 — GET MOANKEYS';
+      }
+    });
+
+    function simulateSuccess(email) {
+      /*
+        REPLACE: After real payment confirmation, call backend to send download email:
+        await fetch('/api/send-download-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, downloadUrl: 'https://your-cdn.com/moankeys-installer.exe' }),
+        });
+      */
+      const downloadUrl = 'https://your-cdn.com/moankeys-installer.zip'; // <!-- REPLACE: Real download URL -->
+      console.log('[MoanKeys] Payment successful!');
+      console.log('[MoanKeys] Sending download email to:', email);
+      console.log('[MoanKeys] Download URL:', downloadUrl);
+      console.log('[MoanKeys] TODO: POST /api/send-download-email with email + downloadUrl');
+
+      document.getElementById('modal-form').style.display = 'none';
+      const success = document.getElementById('modal-success');
+      success.classList.add('show');
+      gsap.from('#modal-success', { opacity: 0, y: 30, duration: 0.6, ease: 'back.out(1.4)' });
+    }
+
+  </script>
+</body>
+</html>
