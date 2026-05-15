@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MoanKeys — Finally, a reason to type with feeling.</title>
-  <meta name="description" content="Install MoanKeys. Press any key. Your laptop moans. 104 unique sounds, one per key. $4.99 one-time. It's dumb. It's genius. It's MoanKeys." />
+  <meta name="description" content="Install MoanKeys. Press any key. Your laptop moans. 104 unique sounds, one per key. Free. It's dumb. It's genius. It's MoanKeys." />
   <meta property="og:title" content="MoanKeys — Finally, a reason to type with feeling." />
-  <meta property="og:description" content="Every keystroke. Every moan. Every time. $4.99 one-time payment." />
+  <meta property="og:description" content="Every keystroke. Every moan. Every time. Completely free." />
   <meta property="og:type" content="website" />
 
   <!-- Google Fonts: Bebas Neue + DM Sans -->
@@ -19,16 +19,9 @@
   <!-- GSAP 3.12.2 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-  <!-- Stripe.js v3 -->
-  <script src="https://js.stripe.com/v3/"></script>
+  <!-- no stripe needed anymore lol -->
 
-  <!--
-    BACKEND REQUIRED:
-    POST /api/create-payment-intent  → returns { clientSecret }
-    POST /api/send-download-email    → sends email with download link after payment confirmed
-    Use Stripe webhooks to confirm payment before sending download link.
-    Recommended stack: Node.js + Express + Stripe SDK + Nodemailer or Resend.
-  -->
+  <!-- free download, no backend needed -->
 
   <style>
     /* ============================================================
@@ -857,7 +850,7 @@
   <!-- Navigation -->
   <nav>
     <a class="nav-logo" href="#hero">MOAN<span>KEYS</span></a>
-    <button class="nav-cta" id="nav-buy-btn" aria-label="Buy MoanKeys">Get It — $4.99</button>
+    <a class="nav-cta" id="nav-buy-btn" href="./aahhWindows-Setup-0.1.0.exe" download aria-label="Download MoanKeys free">Get It Free</a>
   </nav>
 
   <!-- ========================
@@ -888,8 +881,8 @@
     <div class="equalizer" aria-hidden="true" id="equalizer"></div>
 
     <div class="hero-cta-wrap">
-      <button class="hero-cta" id="hero-buy-btn" aria-label="Buy MoanKeys for $4.99">GET IT FOR $4.99 →</button>
-      <p class="hero-sub">one-time payment. instant regret. permanent fun.</p>
+      <a class="hero-cta" id="hero-buy-btn" href="./aahhWindows-Setup-0.1.0.exe" download aria-label="Download MoanKeys for free">GET IT FOR FREE →</a>
+      <p class="hero-sub">open source. no payment. just vibes.</p>
     </div>
 
     <div class="scroll-hint" aria-hidden="true">
@@ -934,23 +927,27 @@
   <!-- ========================
        PRICING
   ========================= -->
-  <section id="pricing" aria-label="Pricing">
-    <p class="section-label">Pricing</p>
-    <h2 class="section-title">ONE PRICE.<br/><span class="accent">INFINITE MOANS.</span></h2>
+  <section id="pricing" aria-label="Download">
+    <p class="section-label">Download</p>
+    <h2 class="section-title">COMPLETELY<br/><span class="accent">FREE.</span></h2>
 
     <div class="price-card" id="price-card">
-      <div class="price-amount">$4.99</div>
-      <p class="price-note"><em>one-time.</em> no subscription. we're not monsters.</p>
+      <div class="price-amount">FREE</div>
+      <p class="price-note"><em>open source.</em> no payment. no email. just download.</p>
       <ul class="features">
         <li><span class="check">✓</span> 104 unique moan sounds (one per key)</li>
-        <li><span class="check">✓</span> Works on Windows &amp; Mac</li>
+        <li><span class="check">✓</span> Windows installer (.exe)</li>
         <li><span class="check">✓</span> Lightweight (your dignity weighs more)</li>
-        <li><span class="check">✓</span> Download link sent to your email instantly</li>
-        <li><span class="check">✓</span> Lifetime updates (yes, we'll add weirder sounds)</li>
+        <li><span class="check">✓</span> No account needed, ever</li>
+        <li><span class="check">✓</span> Open source on GitHub</li>
       </ul>
-      <button class="buy-btn" id="pricing-buy-btn" aria-label="Buy MoanKeys">
-        BUY MOANKEYS — $4.99
-      </button>
+      <a class="buy-btn" id="pricing-buy-btn" href="./aahhWindows-Setup-0.1.0.exe" download aria-label="Download MoanKeys for free">
+        DOWNLOAD MOANKEYS — FREE
+      </a>
+      <p style="text-align:center;margin-top:18px;font-size:12px;color:rgba(255,255,255,0.25);letter-spacing:1px;">
+        © 2024 <a href="https://github.com/py-kalki" target="_blank" rel="noopener" style="color:#ff2d6b;text-decoration:none;">py-kalki</a> &nbsp;·&nbsp;
+        <a href="https://vedanshh.dev" target="_blank" rel="noopener" style="color:#f5ff4b;text-decoration:none;">vedanshh.dev</a>
+      </p>
     </div>
   </section>
 
@@ -961,70 +958,17 @@
     <div class="footer-brand">MOAN<span>KEYS™</span></div>
     <p class="footer-disclaimer">Not responsible for workplace incidents.</p>
     <nav class="footer-links" aria-label="Footer navigation">
-      <a href="#" aria-label="Privacy Policy">Privacy Policy</a>
-      <a href="#" aria-label="Terms of Service">Terms</a>
-      <a href="#" aria-label="Contact Us">Contact</a>
+      <a href="https://github.com/py-kalki" target="_blank" rel="noopener" aria-label="GitHub">GitHub</a>
+      <a href="https://vedanshh.dev" target="_blank" rel="noopener" aria-label="Website">vedanshh.dev</a>
+      <a href="./aahhWindows-Setup-0.1.0.exe" download aria-label="Download">Download</a>
     </nav>
     <p class="footer-made">Made with 🫦 and questionable judgment</p>
+    <p style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.18);letter-spacing:1px;">
+      © 2024 <a href="https://github.com/py-kalki" target="_blank" rel="noopener" style="color:#ff2d6b;text-decoration:none;">py-kalki</a>
+    </p>
   </footer>
 
-  <!-- ========================
-       PAYMENT MODAL
-  ========================= -->
-  <div id="modal-overlay" role="dialog" aria-modal="true" aria-label="Purchase MoanKeys">
-    <div id="modal">
-      <button class="modal-close" id="modal-close" aria-label="Close modal">✕</button>
-
-      <!-- Product Summary -->
-      <div class="modal-product">
-        <div>
-          <div class="modal-product-name">MOANKEYS</div>
-          <div class="modal-product-detail">One-time license · Instant download</div>
-        </div>
-        <div class="modal-product-price">$4.99</div>
-      </div>
-
-      <!-- Form -->
-      <div id="modal-form">
-        <div class="modal-section-title">YOUR DETAILS</div>
-
-        <div class="form-group">
-          <label class="form-label" for="email-input">Email Address</label>
-          <input
-            class="form-input"
-            type="email"
-            id="email-input"
-            placeholder="you@example.com"
-            autocomplete="email"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="card-element">Card Details</label>
-          <!-- REPLACE: Stripe Elements will be mounted here -->
-          <div id="card-element"></div>
-          <div id="card-errors" role="alert"></div>
-        </div>
-
-        <button class="pay-btn" id="pay-btn" type="button" aria-label="Complete purchase">
-          PAY $4.99 — GET MOANKEYS
-        </button>
-        <p class="pay-secure">🔒 Secured by Stripe · SSL Encrypted</p>
-      </div>
-
-      <!-- Success State -->
-      <div id="modal-success">
-        <span class="success-emoji">🫦</span>
-        <div class="success-title">YOUR LAPTOP IS ABOUT TO GET LOUD</div>
-        <p class="success-sub">
-          Check your email — your download link is on its way.<br/>
-          <em>Don't blame us for what happens next.</em>
-        </p>
-      </div>
-
-    </div>
-  </div>
+  <!-- modal removed, direct download now -->
 
   <script>
     'use strict';
@@ -1087,9 +1031,9 @@
     ============================================================ */
     const marqueeInner = document.getElementById('marquee-inner');
     const marqueeItems = [
-      'MOANKEYS', '104 SOUNDS', 'ONE PRICE', '$4.99', 'NO SUBSCRIPTION',
-      'EVERY KEY', 'EVERY MOAN', 'WORKS ON WINDOWS', 'WORKS ON MAC',
-      'INSTANT DOWNLOAD', 'LIFETIME UPDATES'
+      'MOANKEYS', '104 SOUNDS', 'COMPLETELY FREE', 'OPEN SOURCE', 'NO ACCOUNT NEEDED',
+      'EVERY KEY', 'EVERY MOAN', 'WORKS ON WINDOWS',
+      'INSTANT DOWNLOAD', 'py-kalki'
     ];
     // Duplicate for seamless loop
     [...marqueeItems, ...marqueeItems].forEach((item, i) => {
@@ -1341,146 +1285,15 @@
       opacity: 0.3,
     });
 
-    /* ============================================================
-       STRIPE PAYMENT MODAL
-       REPLACE: pk_test_YOUR_KEY_HERE with your real Stripe publishable key
-    ============================================================ */
-    const STRIPE_PK = 'pk_test_YOUR_KEY_HERE'; // <!-- REPLACE: Insert your Stripe publishable key here -->
-
-    let stripe, cardElement;
-    let stripeLoaded = false;
-
-    function initStripe() {
-      if (stripeLoaded || typeof Stripe === 'undefined') return;
-      try {
-        stripe = Stripe(STRIPE_PK);
-        const elements = stripe.elements({
-          fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap' }],
-        });
-
-        cardElement = elements.create('card', {
-          style: {
-            base: {
-              color: '#ffffff',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '15px',
-              fontSmoothing: 'antialiased',
-              '::placeholder': { color: 'rgba(255,255,255,0.2)' },
-              iconColor: '#ff2d6b',
-            },
-            invalid: { color: '#ff2d6b', iconColor: '#ff2d6b' },
-          },
-        });
-        cardElement.mount('#card-element');
-
-        cardElement.on('change', (e) => {
-          document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
-        });
-
-        stripeLoaded = true;
-      } catch (e) {
-        console.warn('[MoanKeys] Stripe init error:', e.message);
-      }
-    }
-
-    // Modal open/close
-    const overlay = document.getElementById('modal-overlay');
-    const payBtn  = document.getElementById('pay-btn');
-
-    function openModal() {
-      overlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
-      initStripe();
-      // Animate modal open
-      gsap.fromTo('#modal', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: 'back.out(1.4)' });
-    }
-
-    function closeModal() {
-      gsap.to('#modal', {
-        y: 30,
-        opacity: 0,
-        duration: 0.2,
-        ease: 'power2.in',
-        onComplete: () => {
-          overlay.classList.remove('active');
-          document.body.style.overflow = '';
-        }
-      });
-    }
-
-    document.getElementById('hero-buy-btn').addEventListener('click', openModal);
-    document.getElementById('pricing-buy-btn').addEventListener('click', openModal);
-    document.getElementById('nav-buy-btn').addEventListener('click', openModal);
-    document.getElementById('modal-close').addEventListener('click', closeModal);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-    // Payment form submission
-    payBtn.addEventListener('click', async () => {
-      const email = document.getElementById('email-input').value.trim();
-
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        document.getElementById('card-errors').textContent = 'Please enter a valid email address.';
-        gsap.fromTo('#email-input', { x: 0 }, { x: [-8, 8, -6, 6, 0], duration: 0.4, ease: 'none' });
-        return;
-      }
-
-      if (!stripeLoaded || !cardElement) {
-        // Demo mode: no real Stripe key
-        simulateSuccess(email);
-        return;
-      }
-
-      payBtn.disabled = true;
-      payBtn.innerHTML = '<span class="spinner"></span>PROCESSING...';
-      document.getElementById('card-errors').textContent = '';
-
-      try {
-        /*
-          REPLACE: Call your backend to create a PaymentIntent
-          const res = await fetch('/api/create-payment-intent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: 499, currency: 'usd', email }),
-          });
-          const { clientSecret } = await res.json();
-          const result = await stripe.confirmCardPayment(clientSecret, {
-            payment_method: { card: cardElement, billing_details: { email } }
-          });
-          if (result.error) throw new Error(result.error.message);
-        */
-
-        // DEMO: Simulate successful payment (remove in production)
-        await new Promise(r => setTimeout(r, 1800));
-        simulateSuccess(email);
-
-      } catch (err) {
-        document.getElementById('card-errors').textContent = err.message;
-        payBtn.disabled = false;
-        payBtn.innerHTML = 'PAY $4.99 — GET MOANKEYS';
-      }
+    // no payment stuff anymore, buttons are direct download links
+    // gsap pulse still works on the anchor tags
+    document.getElementById('hero-buy-btn').addEventListener('click', () => {
+      // tiny flash effect on click
+      gsap.fromTo('#hero-buy-btn', { scale: 0.95 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
     });
-
-    function simulateSuccess(email) {
-      /*
-        REPLACE: After real payment confirmation, call backend to send download email:
-        await fetch('/api/send-download-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, downloadUrl: 'https://your-cdn.com/moankeys-installer.exe' }),
-        });
-      */
-      const downloadUrl = 'https://your-cdn.com/moankeys-installer.zip'; // <!-- REPLACE: Real download URL -->
-      console.log('[MoanKeys] Payment successful!');
-      console.log('[MoanKeys] Sending download email to:', email);
-      console.log('[MoanKeys] Download URL:', downloadUrl);
-      console.log('[MoanKeys] TODO: POST /api/send-download-email with email + downloadUrl');
-
-      document.getElementById('modal-form').style.display = 'none';
-      const success = document.getElementById('modal-success');
-      success.classList.add('show');
-      gsap.from('#modal-success', { opacity: 0, y: 30, duration: 0.6, ease: 'back.out(1.4)' });
-    }
+    document.getElementById('pricing-buy-btn').addEventListener('click', () => {
+      gsap.fromTo('#pricing-buy-btn', { scale: 0.95 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+    });
 
   </script>
 </body>
