@@ -4,16 +4,18 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const DL_URL = 'https://github.com/py-kalki/aahhWindows/releases/download/v0.1.0/aahhWindows-Setup-0.1.0.exe';
+
 const FEATURES = [
   '104 unique moan sounds — one per key, no repeats',
-  'Works on Windows & Mac (yes, both)',
+  'Windows installer (.exe) — just run it',
   'Lightweight — your dignity weighs more',
-  'Download link sent to your email instantly',
-  'Lifetime updates (we\'ll add weirder sounds)',
+  'No account needed, ever',
+  'Open source on GitHub',
   "Silent mode toggle — for when you can't explain",
 ];
 
-export default function Pricing({ onBuyClick }) {
+export default function Pricing() {
   const sectionRef = useRef(null);
   const cardRef    = useRef(null);
   const titleRef   = useRef(null);
@@ -35,18 +37,18 @@ export default function Pricing({ onBuyClick }) {
 
   return (
     <section id="pricing" className="section-pricing" ref={sectionRef}>
-      <p className="section-label">Pricing</p>
+      <p className="section-label">Download</p>
       <h2 className="section-title" ref={titleRef}>
-        ONE PRICE.<br />
-        <span className="accent">INFINITE MOANS.</span>
+        COMPLETELY<br />
+        <span className="accent">FREE.</span>
       </h2>
 
       <div className="price-card" ref={cardRef}>
-        <span className="price-tag">🔥 BEST VALUE 🔥</span>
+        <span className="price-tag">🔥 OPEN SOURCE 🔥</span>
 
-        <div className="price-amount">₹99</div>
+        <div className="price-amount">FREE</div>
         <p className="price-note">
-          one-time. no subscription. <em>we're not monsters.</em>
+          open source. no payment. <em>just download.</em>
         </p>
 
         <ul className="features">
@@ -58,13 +60,21 @@ export default function Pricing({ onBuyClick }) {
           ))}
         </ul>
 
-        <button
+        <a
           className="buy-btn"
           id="pricing-buy-btn"
-          onClick={onBuyClick}
+          href={DL_URL}
+          download
         >
-          BUY AAHHWINDOWS — ₹99
-        </button>
+          DOWNLOAD AAHHWINDOWS — FREE
+        </a>
+
+        <p style={{ textAlign: 'center', marginTop: '18px', fontSize: '12px', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>
+          © {new Date().getFullYear()}{' '}
+          <a href="https://github.com/py-kalki" target="_blank" rel="noopener" style={{ color: '#ff2d6b', textDecoration: 'none' }}>py-kalki</a>
+          {' · '}
+          <a href="https://vedanshh.dev" target="_blank" rel="noopener" style={{ color: '#f5ff4b', textDecoration: 'none' }}>vedanshh.dev</a>
+        </p>
       </div>
     </section>
   );

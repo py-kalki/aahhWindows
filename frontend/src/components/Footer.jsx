@@ -1,4 +1,4 @@
-export default function Footer({ onPrivacyClick, onTermsClick }) {
+export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-brand">
@@ -10,30 +10,26 @@ export default function Footer({ onPrivacyClick, onTermsClick }) {
       </p>
 
       <nav className="footer-links" aria-label="Footer navigation">
-        <button
-          className="footer-link-btn"
-          onClick={onPrivacyClick}
-          id="footer-privacy-btn"
-        >
-          Privacy Policy
-        </button>
-        <button
-          className="footer-link-btn"
-          onClick={onTermsClick}
-          id="footer-terms-btn"
-        >
-          Terms of Service
-        </button>
-        <a href="mailto:support@aahhwindows.com" className="footer-link-btn">
-          Contact
+        <a href="https://github.com/py-kalki" target="_blank" rel="noopener" className="footer-link-btn">
+          GitHub
         </a>
-        <a href="#faq" className="footer-link-btn">
-          FAQ
+        <a href="https://vedanshh.dev" target="_blank" rel="noopener" className="footer-link-btn">
+          vedanshh.dev
         </a>
+        <a href="https://github.com/py-kalki/aahhWindows/releases/download/v0.1.0/aahhWindows-Setup-0.1.0.exe" download className="footer-link-btn">
+          Download
+        </a>
+        <a href="#faq" className="footer-link-btn">FAQ</a>
       </nav>
 
       <p className="footer-made">
-        Made with 🫦 and questionable judgment &nbsp;·&nbsp; © {new Date().getFullYear()} aahhWindows
+        Made with 🫦 and questionable judgment
+      </p>
+      <p style={{ marginTop: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px' }}>
+        © {new Date().getFullYear()}{' '}
+        <a href="https://github.com/py-kalki" target="_blank" rel="noopener" style={{ color: '#ff2d6b', textDecoration: 'none' }}>
+          py-kalki
+        </a>
       </p>
     </footer>
   );

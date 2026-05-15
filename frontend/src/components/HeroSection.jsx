@@ -18,7 +18,9 @@ const EQ_BARS = Array.from({ length: 20 }, (_, i) => ({
   d: (0.4 + Math.random() * 0.7).toFixed(2) + 's',
 }));
 
-export default function HeroSection({ onBuyClick }) {
+const DL_URL = 'https://github.com/py-kalki/aahhWindows/releases/download/v0.1.0/aahhWindows-Setup-0.1.0.exe';
+
+export default function HeroSection() {
   const sectionRef = useRef(null);
   const logoRef    = useRef(null);
   const taglineRef = useRef(null);
@@ -150,16 +152,17 @@ export default function HeroSection({ onBuyClick }) {
 
       {/* CTA */}
       <div className="hero-cta-wrap">
-        <button
+        <a
           className="hero-cta"
           id="hero-buy-btn"
-          onClick={onBuyClick}
+          href={DL_URL}
+          download
           ref={ctaRef}
         >
-          GET IT FOR ₹99 →
-        </button>
+          GET IT FOR FREE →
+        </a>
         <p className="hero-sub" ref={subRef}>
-          one-time payment. instant regret. permanent fun.
+          open source. no payment. just vibes.
         </p>
       </div>
 
