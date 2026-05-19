@@ -534,6 +534,42 @@ button { cursor: none; font-family: var(--font-body); }
 .footer-made { font-size: 13px; color: rgba(255,255,255,0.18); }
 
 /* ============================================================
+   WATERMARK
+============================================================ */
+.watermark-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(15, 15, 15, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--muted);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  cursor: none; /* keep with site theme */
+}
+.watermark-pill:hover {
+  background: rgba(20, 20, 20, 0.95);
+  border-color: var(--pink);
+  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(224, 28, 46, 0.2);
+}
+.watermark-pill span {
+  color: var(--pink);
+  font-weight: 600;
+}
+
+/* ============================================================
    PAYMENT MODAL
 ============================================================ */
 .modal-overlay {

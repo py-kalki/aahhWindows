@@ -32,6 +32,17 @@ export default function App() {
       </main>
 
       <Footer />
+      
+      {/* Sticky Watermark Pill */}
+      <a 
+        href="https://www.vedanshh.dev" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="watermark-pill"
+        title="Designed and Developed by Vedanshh.dev"
+      >
+        Designed and Developed by <span>Vedanshh.dev</span>
+      </a>
     </>
   );
 }

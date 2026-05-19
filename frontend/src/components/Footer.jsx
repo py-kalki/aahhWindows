@@ -25,6 +25,9 @@ export default function Footer() {
       <p className="footer-made">
         Made with 🫦 and questionable judgment
       </p>
+      <p style={{ marginTop: '12px', fontSize: '13px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>
+        Designed and Developed by <a href="https://www.vedanshh.dev" target="_blank" rel="noopener" style={{ color: 'var(--yellow)', textDecoration: 'none', fontWeight: 'bold' }}>Vedanshh.dev</a>
+      </p>
       <p style={{ marginTop: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.2)', letterSpacing: '1px' }}>
         © {new Date().getFullYear()}{' '}
         <a href="https://github.com/py-kalki" target="_blank" rel="noopener" style={{ color: '#ff2d6b', textDecoration: 'none' }}>
